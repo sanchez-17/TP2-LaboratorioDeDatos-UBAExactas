@@ -1,1 +1,1 @@
-# -TP2-LaboratorioDeDatos-UBAExactas
+# TP2-LaboratorioDeDatos-UBAExactas
