@@ -16,10 +16,18 @@ def graficar(df,fila):
     plt.title(f'Numero: {numero}')
     plt.show()
 #%%
+# =============================================================================
+#Ejercicio 1
+#Realizar un análisis exploratorio de los datos. Ver, entre otras cosas,
+#cantidad de datos, cantidad y tipos de atributos, cantidad de clases de la
+#variable de interés (el dígito) y otras características que consideren
+#relevantes. ¿Cuáles parecen ser atributos relevantes? ¿Cuáles no? Se
+#pueden hacer gráficos para abordar estas preguntas.
+# =============================================================================
 df_sin_label = np.array(df.iloc[:,1:])
 imgs = df_sin_label.reshape(-1,28, 28)
 
-# Calcular la varianza para cada columna
+# Calcular el promedio de cada pixel
 matriz_prom = np.mean(imgs, axis=0)
 
 plt.imshow(matriz_prom, cmap='hot')
@@ -108,3 +116,4 @@ plt.legend()
 plt.title('Exactitud del modelo de knn')
 plt.xlabel('Cantidad de vecinos')
 plt.ylabel('Exactitud (accuracy)')
+plt.show()
