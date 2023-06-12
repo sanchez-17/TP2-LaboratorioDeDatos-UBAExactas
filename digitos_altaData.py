@@ -84,6 +84,89 @@ plt.show()
 # =============================================================================
 
 con_0s_y_1s = df[ (df["digito"]==0) | (df["digito"]==1) ]
+#Inicializo imagenes promedio para 0s y 1s
+con_0s= df[(df["digito"]==0)]
+con_1s= df[(df["digito"]==1)]
+
+imgs_con_0 = np.array(con_0s.iloc[:,1:])
+ceros = imgs_con_0.reshape(-1,28, 28)
+prom_ceros = np.mean(ceros, axis=0)
+prom_ceros_dif = prom_ceros
+umbralUnos=200
+
+imgs_con_1 = np.array(con_1s.iloc[:,1:])
+unos = imgs_con_1.reshape(-1,28, 28)
+prom_uno = np.mean(unos, axis=0)
+prom_uno_dif = prom_uno
+umbralCeros=150
+
+plt.imshow(prom_ceros, cmap='hot')
+plt.colorbar()
+plt.title('Imagen promedio (0)')
+plt.show()
+
+plt.imshow(prom_uno, cmap='hot')
+plt.colorbar()
+plt.title('Imagen  (1)')
+plt.show()
+#%% Matriz diferencial unos
+
+for i in range(len(prom_uno_dif)):
+    for j in range(len(prom_uno_dif)):
+        if(prom_cpixeles_sign_unoeros[i][j]>umbralCeros):
+            prom_uno_dif[i][j]=0
+
+
+plt.figure(figsize=(6, 4))
+plt.imshow(prom_uno_dif, cmap='hot')
+plt.colorbar()
+plt.title('Imagen promedio (1) sin representativos del 0')
+plt.show()
+
+umbralUnos=200
+
+for i in range(0,len(prom_uno_dif)):
+    for j in range(0,len(prom_uno_dif[0])):
+        if(prom_uno[i][j]<umbralUnos):
+            prom_uno_dif[i][j]=0
+
+plt.imshow(prom_uno_dif, cmap='hot')
+plt.colorbar()
+plt.title('Imagen promedio (1) diferencial')
+plt.show()
+#busco las columnas relevantes
+array_unos_dif=prom_uno_dif.flatten()
+pixeles_sign_uno=np.argwhere(array_unos_dif>0)+1
+
+#%% Matriz diferencial ceros
+
+umbralUnos=150
+
+for i in range(len(prom_ceros_dif)):
+    for j in range(len(prom_ceros_dif)):
+        if(prom_uno[i][j]>umbralUnos):
+            prom_ceros_dif[i][j]=0
+
+plt.figure(figsize=(6, 4))
+plt.imshow(prom_ceros_dif, cmap='hot')
+plt.colorbar()
+plt.title('Imagen promedio (0) sin representativos del 1')
+plt.show()
+
+umbralCeros=175
+
+for i in range(0,len(prom_ceros_dif)):
+    for j in range(0,len(prom_ceros_dif[0])):
+        if(prom_ceros[i][j]<umbralCeros):
+            prom_ceros_dif[i][j]=0
+
+plt.imshow(prom_ceros_dif, cmap='hot')
+plt.colorbar()
+plt.title('Imagen promedio (0) diferencial')
+plt.show()
+
+array_ceros_dif=prom_ceros_dif.flatten()
+pixeles_sign_ceros=np.argwhere(array_ceros_dif>0)+1            
 
 #%%
 # =============================================================================
