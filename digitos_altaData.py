@@ -7,7 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
-from sklearn import metrics
+from sklearn.metrics import accuracy_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import KFold, cross_val_score, cross_validate
 
 
 df = pd.read_csv('./data/mnist_desarrollo.csv')
@@ -267,3 +269,67 @@ plt.ylabel('Exactitud (accuracy)')
 # de los resultados, tener en cuenta las medidas de evaluación (por ejemplo,
 # la exactitud) y la cantidad de atributos.
 # =============================================================================
+X = con_0s_y_1s.iloc[:,[490,462,380]]
+Y = con_0s_y_1s.digito
+
+# CROSS VALIDATION CON KNN Y TREE CON CROSS_VAL_SCORE
+
+clf = DecisionTreeClassifier(random_state=42)
+knn = KNeighborsClassifier(n_neighbors=5)
+
+k_folds = KFold(n_splits = 5)
+
+scores = cross_val_score(clf, X, Y, cv = k_folds)
+
+print("Cross Validation Scores: ", scores)
+print("Average CV Score: ", scores.mean())
+print("Number of CV Scores used in Average: ", len(scores))
+
+scores = cross_val_score(knn, X, Y, cv = k_folds)
+
+print("Cross Validation Scores: ", scores)
+print("Average CV Score: ", scores.mean())
+print("Number of CV Scores used in Average: ", len(scores))
+
+#%%
+
+# CROSS VALIDATION CON KNN CON CROSS_VALIDATE
+
+cv_results = cross_validate(knn, X, Y, cv=10,return_train_score=True)
+sorted(cv_results.keys())
+print('Test score:', cv_results['test_score'])
+print('Train score:', cv_results['train_score'])
+print('Promedio Test score: ', np.mean(cv_results['test_score']))
+print('Promedio Train score: ', np.mean(cv_results['train_score']))
+
+#%%
+
+# CROSS VALIDATION CON KFOLD.SPLIT (FALLO)
+
+kf = KFold(n_splits=5)
+
+# Inicializar una lista para almacenar los resultados de precisión
+accuracy_scores = []
+
+for train_index, test_index in kf.split(X):
+
+    X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+    Y_train, Y_test = Y[train_index], Y[test_index]
+    
+    # Inicializar y ajustar el clasificador KNN
+    knn = KNeighborsClassifier(n_neighbors=3)
+    knn.fit(X_train, Y_train)
+    
+    # Realizar predicciones en el conjunto de prueba
+    Y_pred = knn.predict(X_test)
+    
+    # Calcular la precisión y agregarla a la lista de resultados
+    accuracy = accuracy_score(Y_test, Y_pred)
+    accuracy_scores.append(accuracy)
+
+# Calcular el promedio de los resultados de precisión
+average_accuracy = sum(accuracy_scores) / len(accuracy_scores)
+
+# Imprimir el resultado final
+print("Precisión promedio:", average_accuracy)
+
