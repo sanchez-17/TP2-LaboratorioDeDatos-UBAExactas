@@ -55,3 +55,56 @@ cant = pd.DataFrame({'cantidad': cant_de_imgs_por_num})
 porcentajes = pd.DataFrame({'% subconj':porc_de_imgs_por_num,'% dataset original':round(cant_de_imgs_por_num / len(df) * 100,2)})
 cant.index.name = 'Dígito'
 tabla = pd.concat([cant, porcentajes], axis=1)
+
+#%%
+# =============================================================================
+# Ejercicio 4
+#Ajustar un modelo de knn considerando pocos atributos, por ejemplo 3.
+#Probar con distintos conjuntos de 3 atributos y comparar resultados.
+#Analizar utilizando otras cantidades de atributos.
+# =============================================================================
+import seaborn as sns
+from sklearn import tree
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+X = con_0s_y_1s.iloc[:,[629,630,600]]
+Y = con_0s_y_1s[label]
+
+Nrep = 5
+#valores_n = [1,3,5,7,10,20]
+#valores_n= np.linspace(1,100,20,dtype = int)
+valores_n = [5,10,15,20]
+
+resultados_test = np.zeros((Nrep, len(valores_n)))
+resultados_train = np.zeros((Nrep, len(valores_n)))
+
+
+for i in range(Nrep):
+    j=0
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
+    while j < len(valores_n):
+        k = valores_n[j]
+        model = KNeighborsClassifier(n_neighbors = k)
+        model.fit(X_train, Y_train) 
+        Y_pred = model.predict(X_test)
+        Y_pred_train = model.predict(X_train)
+        acc_test = metrics.accuracy_score(Y_test, Y_pred)
+        acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+        resultados_test[i, j] = acc_test
+        resultados_train[i, j] = acc_train
+        j=j+1
+
+#%%
+
+promedios_train = np.mean(resultados_train, axis = 0) 
+promedios_test = np.mean(resultados_test, axis = 0) 
+#%%
+
+plt.figure(figsize=(7,5),dpi=100)
+plt.plot(valores_n, promedios_train, label = 'Train')
+plt.plot(valores_n, promedios_test, label = 'Test')
+plt.legend()
+plt.title('Exactitud del modelo de knn')
+plt.xlabel('Cantidad de vecinos')
+plt.ylabel('Exactitud (accuracy)')
