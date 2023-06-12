@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import KFold, cross_val_score, cross_validate
+
+
 
 
 df = pd.read_csv('./data/mnist_desarrollo.csv')
@@ -332,4 +333,88 @@ average_accuracy = sum(accuracy_scores) / len(accuracy_scores)
 
 # Imprimir el resultado final
 print("Precisión promedio:", average_accuracy)
+#%%
+# =============================================================================
+# Ejercicio 6
+# Trabajar nuevamente con el dataset de todos los dígitos. Ajustar un
+# modelo de árbol de decisión. Analizar distintas profundidades.
+# =============================================================================
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import metrics
+
+X = df.iloc[:,1:]
+Y = df['digito']
+
+Nrep = 5
+valores_n = range(1, 20)
+
+resultados_test = np.zeros((Nrep, len(valores_n)))
+resultados_train = np.zeros((Nrep, len(valores_n)))
+
+for i in range(Nrep):
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
+    for k in valores_n:
+        model = DecisionTreeClassifier(criterion = "entropy",max_depth = 4)
+        model.fit(X_train, Y_train) 
+        Y_pred = model.predict(X_test)
+        Y_pred_train = model.predict(X_train)
+        acc_test = metrics.accuracy_score(Y_test, Y_pred)
+        acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+        resultados_test[i, k-1] = acc_test
+        resultados_train[i, k-1] = acc_train
+
+#%%
+promedios_train = np.mean(resultados_train, axis = 0) 
+promedios_test = np.mean(resultados_test, axis = 0) 
+#%%
+
+plt.plot(valores_n, promedios_train, label = 'Train')
+plt.plot(valores_n, promedios_test, label = 'Test')
+plt.legend()
+plt.title('Exactitud del modelo de knn')
+plt.xlabel('Cantidad de vecinos')
+plt.ylabel('Exactitud (accuracy)')
+
+#%%
+def entrenar_y_graficar(X,Y,model,Nreps,k):
+    resultados_test = np.zeros((Nrep, len(valores_n)))
+    resultados_train = np.zeros((Nrep, len(valores_n)))
+
+    for i in range(Nrep):
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
+        for k in valores_n:
+            model = DecisionTreeClassifier(criterion = "entropy",max_depth = 4)
+            model.fit(X_train, Y_train) 
+            Y_pred = model.predict(X_test)
+            Y_pred_train = model.predict(X_train)
+            acc_test = metrics.accuracy_score(Y_test, Y_pred)
+            acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+            resultados_test[i, k-1] = acc_test
+            resultados_train[i, k-1] = acc_train
+    
+    promedios_train = np.mean(resultados_train, axis = 0) 
+    promedios_test = np.mean(resultados_test, axis = 0) 
+    
+    plt.plot(valores_n, promedios_train, label = 'Train')
+    plt.plot(valores_n, promedios_test, label = 'Test')
+    plt.legend()
+    plt.title('Exactitud del modelo de knn')
+    plt.xlabel('Cantidad de vecinos')
+    plt.ylabel('Exactitud (accuracy)')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
