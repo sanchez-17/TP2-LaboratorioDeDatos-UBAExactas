@@ -5,7 +5,6 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -263,7 +262,6 @@ plt.title('Exactitud del modelo de knn')
 plt.xlabel('Cantidad de vecinos')
 plt.ylabel('Exactitud (accuracy)')
 
-#%%
 # =============================================================================
 # Ejercicio 5
 # Para comparar modelos, utilizar validación cruzada. Comparar modelos
@@ -271,7 +269,6 @@ plt.ylabel('Exactitud (accuracy)')
 # de los resultados, tener en cuenta las medidas de evaluación (por ejemplo,
 # la exactitud) y la cantidad de atributos.
 # =============================================================================
-
 X = con_0s_y_1s.iloc[:,[490,462,380]]
 Y = con_0s_y_1s.digito
 
@@ -335,3 +332,4 @@ average_accuracy = sum(accuracy_scores) / len(accuracy_scores)
 
 # Imprimir el resultado final
 print("Precisión promedio:", average_accuracy)
+
