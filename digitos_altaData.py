@@ -24,6 +24,14 @@ def graficar(df,fila):
 #relevantes. ¿Cuáles parecen ser atributos relevantes? ¿Cuáles no? Se
 #pueden hacer gráficos para abordar estas preguntas.
 # =============================================================================
+#Las proporciones de los dígitos
+label = df.columns[0] #Columna label
+cant_de_imgs_por_num = df[label].value_counts().sort_index()
+porc_de_imgs_por_num = round(cant_de_imgs_por_num / len(df) * 100,2)
+info = pd.DataFrame({'cant': cant_de_imgs_por_num,'% cant.':porc_de_imgs_por_num})
+info.index.name = 'Dígito'
+info = info.sort_values(by='cant')
+#%%
 df_sin_label = np.array(df.iloc[:,1:])
 imgs = df_sin_label.reshape(-1,28, 28)
 
@@ -42,7 +50,6 @@ plt.show()
 #dígitos 0 y 1.
 # =============================================================================
 
-label = df.columns[0] #Columna label
 con_0s_y_1s = df[ (df[label]==0) | (df[label]==1) ]
 
 #%%
