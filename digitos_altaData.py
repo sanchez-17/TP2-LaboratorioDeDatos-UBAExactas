@@ -5,6 +5,11 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+
 
 df = pd.read_csv('./data/mnist_desarrollo.csv')
 
@@ -15,6 +20,32 @@ def graficar(df,fila):
     numero = df.iloc[fila,0]
     plt.title(f'Numero: {numero}')
     plt.show()
+
+# Renombramos la primera columna que nos dice los números del 1 al 9 con el nombre 'digito'
+df = df.rename(columns={'5': 'digito'})
+
+label = df.columns[0] #Columna label
+con_0s_y_1s = df[ (df[label]==0) | (df[label]==1) ]
+
+# Esto calcula para cada pixel la suma total de los valores que tienen a lo largo de todas las imagenes
+# Arma un dataframe cuya primera columna es el pixel, y la segunda es el valor total sumado
+def suma_columnas(df):
+    suma_columna = []
+    a = pd.DataFrame()
+    for i in range(len(df.columns)-1):
+        suma_columna.append(df.iloc[1:,i].sum())
+    a['pixel'] = df.columns
+    a = a.drop(0)
+    a['suma_de_color'] = suma_columna
+    return a
+
+columnas = suma_columnas(df)
+columnas_ceros_y_unos = suma_columnas(con_0s_y_1s)
+
+# Dataframe de pixeles que tienen unicamente el valor 0 a lo largo de todas las imagenes
+sub = columnas[columnas['suma_de_color'] == 0]
+# Cantidad de pixeles que tienen unicamente el valor 0 a lo largo de todas las imagenes
+len(sub)/(len(df.columns)-1) * 100 # 66/784*100
 #%%
 # =============================================================================
 #Ejercicio 1
@@ -71,13 +102,13 @@ tabla = pd.concat([cant, porcentajes], axis=1)
 #Probar con distintos conjuntos de 3 atributos y comparar resultados.
 #Analizar utilizando otras cantidades de atributos.
 # =============================================================================
-import seaborn as sns
-from sklearn import tree
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-from sklearn import metrics
-X = con_0s_y_1s.iloc[:,[629,630,600]]
-Y = con_0s_y_1s[label]
+#%%
+
+#X = df_0.iloc[:,[629,630,600]]
+#Y = df_0.digito
+X = con_0s_y_1s.iloc[:,[213,214,241]]
+Y = con_0s_y_1s.digito
+
 
 Nrep = 5
 #valores_n = [1,3,5,7,10,20]
@@ -116,4 +147,3 @@ plt.legend()
 plt.title('Exactitud del modelo de knn')
 plt.xlabel('Cantidad de vecinos')
 plt.ylabel('Exactitud (accuracy)')
-plt.show()
