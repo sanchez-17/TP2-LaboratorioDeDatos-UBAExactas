@@ -50,10 +50,30 @@ proporcion_digitos = pd.DataFrame({'cant': cant_de_imgs_por_num,'% cant.':porc_d
 proporcion_digitos.index.name = 'Dígito'
 proporcion_digitos = proporcion_digitos.sort_values(by='cant')
 #%%
-
-# Histograma para proporcion de digitos
-plt.hist(df["digito"], orientation = "vertical")
-
+# Calcular las ocurrencias de cada dígito
+ocurrencias = df['digito'].value_counts()
+# Calcular el total de ocurrencias
+total_ocurrencias = ocurrencias.sum()
+# Calcular los porcentajes de ocurrencia
+porcentajes = (ocurrencias / total_ocurrencias) * 100
+# Crear la figura y el eje del gráfico
+fig, ax = plt.subplots()
+digitos = [str(d) for d in ocurrencias.index]
+plt.bar(digitos,ocurrencias.values)
+#Agregar etiquetas de texto en cada barra
+for i in range(len(ocurrencias)):
+    ax.text(i , ocurrencias.values[i],
+            f"{porcentajes.values[i]:.2f}%",
+            ha='center',
+            va='top',
+            rotation=60,
+            c="azure")
+# Configurar etiquetas y título del gráfico
+ax.set_xlabel('Dígitos')
+ax.set_ylabel('Ocurrencias')
+ax.set_title('Ocurrencias de dígitos')
+plt.savefig('./data/Ocurrencias_digitos.png')
+plt.show()
 #%%
 tabla = pd.plotting.table(plt.figure(), proporcion_digitos, loc='center')
 
