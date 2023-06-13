@@ -9,6 +9,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold, cross_val_score, cross_validate
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import metrics
 
 
 
@@ -74,19 +76,6 @@ ax.set_ylabel('Ocurrencias')
 ax.set_title('Ocurrencias de dígitos')
 plt.savefig('./data/Ocurrencias_digitos.png')
 plt.show()
-#%%
-tabla = pd.plotting.table(plt.figure(), proporcion_digitos, loc='center')
-
-# Establecer el estilo de la tabla
-tabla.auto_set_font_size(False)
-tabla.set_fontsize(12)
-tabla.scale(1.2, 1.2)
-
-# Ocultar los ejes del gráfico
-plt.axis('off')
-
-# Exportar el gráfico de tabla como una imagen
-plt.savefig('tabla.png', bbox_inches='tight')
 #%%
 df_sin_label = np.array(df.iloc[:,1:])
 imgs = df_sin_label.reshape(-1,28, 28)
@@ -359,82 +348,37 @@ print("Precisión promedio:", average_accuracy)
 # Trabajar nuevamente con el dataset de todos los dígitos. Ajustar un
 # modelo de árbol de decisión. Analizar distintas profundidades.
 # =============================================================================
-from sklearn.tree import DecisionTreeClassifier
-from sklearn import metrics
 
-X = df.iloc[:,1:]
-Y = df['digito']
-
-Nrep = 5
-valores_n = range(1, 20)
-
-resultados_test = np.zeros((Nrep, len(valores_n)))
-resultados_train = np.zeros((Nrep, len(valores_n)))
-
-for i in range(Nrep):
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
-    for k in valores_n:
-        model = DecisionTreeClassifier(criterion = "entropy",max_depth = 4)
-        model.fit(X_train, Y_train) 
-        Y_pred = model.predict(X_test)
-        Y_pred_train = model.predict(X_train)
-        acc_test = metrics.accuracy_score(Y_test, Y_pred)
-        acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
-        resultados_test[i, k-1] = acc_test
-        resultados_train[i, k-1] = acc_train
-
-#%%
-promedios_train = np.mean(resultados_train, axis = 0) 
-promedios_test = np.mean(resultados_test, axis = 0) 
-#%%
-
-plt.plot(valores_n, promedios_train, label = 'Train')
-plt.plot(valores_n, promedios_test, label = 'Test')
-plt.legend()
-plt.title('Exactitud del modelo de knn')
-plt.xlabel('Cantidad de vecinos')
-plt.ylabel('Exactitud (accuracy)')
-
-#%%
-def entrenar_y_graficar(X,Y,model,Nreps,k):
-    resultados_test = np.zeros((Nrep, len(valores_n)))
-    resultados_train = np.zeros((Nrep, len(valores_n)))
+def entrenar_y_graficar(X,Y,criterio,Nrep,k,nombre_archivo):
+    valores_k = range(1,k+1)
+    resultados_test = np.zeros( (Nrep,k))
+    resultados_train = np.zeros( (Nrep,k))
 
     for i in range(Nrep):
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
-        for k in valores_n:
-            model = DecisionTreeClassifier(criterion = "entropy",max_depth = 4)
-            model.fit(X_train, Y_train) 
+        for j in valores_k:
+            model = DecisionTreeClassifier(criterion = criterio,max_depth = j)
+            model.fit(X_train, Y_train)
             Y_pred = model.predict(X_test)
             Y_pred_train = model.predict(X_train)
             acc_test = metrics.accuracy_score(Y_test, Y_pred)
             acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
-            resultados_test[i, k-1] = acc_test
-            resultados_train[i, k-1] = acc_train
+            resultados_test[i,j-1] = acc_test
+            resultados_train[i,j-1] = acc_train
     
-    promedios_train = np.mean(resultados_train, axis = 0) 
-    promedios_test = np.mean(resultados_test, axis = 0) 
+    promedios_train = np.mean(resultados_train, axis = 0) #A lo largo de cada columna
+    promedios_test = np.mean(resultados_test, axis = 0)
     
-    plt.plot(valores_n, promedios_train, label = 'Train')
-    plt.plot(valores_n, promedios_test, label = 'Test')
+    plt.plot(valores_k, promedios_train, label = 'Train')
+    plt.plot(valores_k, promedios_test, label = 'Test')
     plt.legend()
-    plt.title('Exactitud del modelo de knn')
-    plt.xlabel('Cantidad de vecinos')
+    plt.title('Exactitud de arboles de decision')
+    plt.xlabel('Profundidad')
     plt.ylabel('Exactitud (accuracy)')
+    archive = "./data/" + nombre_archivo + ".png"
+    plt.savefig(archive)
+    plt.show()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+X = df.iloc[:,1:]
+Y = df['digito']
+entrenar_y_graficar(X,Y,"entropy",2,20,"entropy_k_5_N_3")
