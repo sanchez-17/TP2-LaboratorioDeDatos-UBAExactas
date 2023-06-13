@@ -1,2 +1,3 @@
 *.csv
 **/.spyproject
+**/.ipynb_checkpoints
