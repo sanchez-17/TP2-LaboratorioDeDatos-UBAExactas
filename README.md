@@ -10,5 +10,5 @@
 Descomprimir los datos de entrenamiento(desarrollo)
 
 ```
-gunzip data/mnist_desarrollo.csv
+gunzip -c data/mnist_desarrollo.csv.gz > data/mnist_desarrollo.csv 
 ```
