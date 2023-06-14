@@ -5,7 +5,7 @@ Integrantes: Mariano Papaleo, Gaston Ariel Sanchez, Juan Pablo Aquilante
 
 """
 #Carga de archivos
-
+from funciones import *
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -16,7 +16,11 @@ from sklearn.model_selection import KFold, cross_val_score, cross_validate
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
 
+import time
+
 df = pd.read_csv('./data/mnist_desarrollo.csv',header = None)
+df_test = pd.read_csv('./data/mnist_test.csv',header=None)
+df_binario_test = pd.read_csv('./data/mnist_test_binario.csv',header = None)
 
 # =============================================================================
 #Ejercicio 1
@@ -37,22 +41,11 @@ for i in range(28):
 
 
 df = df.rename(columns=dict(zip(df.columns, cols)))
-#%%
+df_test = df.rename(columns=dict(zip(df.columns, cols)))
+df_binario_test = df.rename(columns=dict(zip(df.columns, cols)))
 
-#Exploracion de datos
-def graficar(df,fila):
-    plt.imshow(np.array(df.iloc[fila,1:]).reshape(28,28),cmap='Greys')
-    numero = df.iloc[fila,0]
-    plt.title(f'Numero: {numero}')
-    plt.show()
-
-#Las proporciones de los dígitos en todo el dataset
-cant_de_imgs_por_num = df["digito"].value_counts().sort_index()
-porc_de_imgs_por_num = round(cant_de_imgs_por_num / len(df) * 100,2)
-proporcion_digitos = pd.DataFrame({'cant': cant_de_imgs_por_num,'% cant.':porc_de_imgs_por_num})
-proporcion_digitos.index.name = 'Dígito'
-proporcion_digitos = proporcion_digitos.sort_values(by='cant')
-#%% vemos la distribucion de los digitos en el dataset
+#%% Exploracion de datos
+# vemos la distribucion de los digitos en el dataset
 
 # Calcular las ocurrencias de cada dígito
 ocurrencias = df['digito'].value_counts()
@@ -79,6 +72,7 @@ ax.set_title('Ocurrencias de dígitos')
 plt.savefig('./data/Ocurrencias_digitos.png')
 plt.show()
 #%%
+#Obtenemos matriz promedio de todo el dataset
 df_sin_label = np.array(df.iloc[:,1:])
 imgs = df_sin_label.reshape(-1,28, 28)
 
@@ -87,7 +81,7 @@ matriz_prom = np.mean(imgs, axis=0)
 
 plt.imshow(matriz_prom, cmap='hot')
 plt.colorbar()
-plt.title('Mapa de calor de dispersión')
+plt.title('Imagen promedio')
 plt.show()
 
 #%%
@@ -97,22 +91,21 @@ plt.show()
 #dígitos 0 y 1.
 # =============================================================================
 
-con_0s_y_1s = df[ (df["digito"]==0) | (df["digito"]==1) ]
+df_binario = df[ (df["digito"]==0) | (df["digito"]==1) ]
 #Inicializo imagenes promedio para 0s y 1s
 con_0s= df[(df["digito"]==0)]
 con_1s= df[(df["digito"]==1)]
 
+#Obtenemos imagenes prom para 0 y 1
 imgs_con_0 = np.array(con_0s.iloc[:,1:])
 ceros = imgs_con_0.reshape(-1,28, 28)
 prom_ceros = np.mean(ceros, axis=0)
 prom_ceros_dif = prom_ceros
-umbralUnos=200
 
 imgs_con_1 = np.array(con_1s.iloc[:,1:])
 unos = imgs_con_1.reshape(-1,28, 28)
-prom_uno = np.mean(unos, axis=0)
-prom_uno_dif = prom_uno
-umbralCeros=150
+prom_unos = np.mean(unos, axis=0)
+prom_unos_dif = prom_unos
 
 plt.imshow(prom_ceros, cmap='hot')
 plt.colorbar()
@@ -120,55 +113,68 @@ plt.title('Imagen promedio para el digito 0')
 plt.axis('off')
 plt.show()
 
-plt.imshow(prom_uno, cmap='hot')
+plt.imshow(prom_unos, cmap='hot')
 plt.colorbar()
 plt.title('Imagen promedio para el digito 1')
 plt.axis('off')
 plt.show()
-#%% Matriz diferencial unos
+#%% Matriz diferencial unos: 
+# Sacamos pixeles significativos del 0 de la imagen prom del 1
 
-for i in range(len(prom_uno_dif)):
-    for j in range(len(prom_uno_dif)):
-        if(prom_cpixeles_sign_unoeros[i][j]>umbralCeros):
-            prom_uno_dif[i][j]=0
+umbralCeros = 50
+
+for i in range(len(prom_unos_dif)):
+    for j in range(len(prom_unos_dif)):
+        if(prom_ceros[i][j]>umbralCeros):
+            prom_unos_dif[i][j]=0
 
 plt.figure(figsize=(6, 4))
-plt.imshow(prom_uno_dif, cmap='hot')
+plt.imshow(prom_unos_dif, cmap='hot')
 plt.colorbar()
-plt.title('Imagen promedio (1) sin representativos del 0')
+plt.title('Imagen diferencial del 1')
 plt.show()
+#%% Mas aun, resaltamos pixeles significativos de la imagen resultante
+umbralUnos=150
 
-umbralUnos=200
+for i in range(0,len(prom_unos_dif)):
+    for j in range(0,len(prom_unos_dif[0])):
+        if(prom_unos[i][j]<umbralUnos):
+            prom_unos_dif[i][j]=0
 
-for i in range(0,len(prom_uno_dif)):
-    for j in range(0,len(prom_uno_dif[0])):
-        if(prom_uno[i][j]<umbralUnos):
-            prom_uno_dif[i][j]=0
-
-plt.imshow(prom_uno_dif, cmap='hot')
+plt.imshow(prom_unos_dif, cmap='hot')
 plt.colorbar()
-plt.title('Imagen promedio (1) diferencial')
+plt.title('Pixeles representativos del 1')
 plt.show()
 #busco las columnas relevantes
-array_unos_dif=prom_uno_dif.flatten()
-pixeles_sign_uno=np.argwhere(array_unos_dif>0)+1
+array_unos_dif=prom_unos_dif.flatten()
+pixeles_sign_unos=np.argwhere(array_unos_dif>0)+1
 
-#%% Matriz diferencial ceros
+#%% Reseteamos la imagen promedio
+imgs_con_0 = np.array(con_0s.iloc[:,1:])
+ceros = imgs_con_0.reshape(-1,28, 28)
+prom_ceros = np.mean(ceros, axis=0)
+prom_ceros_dif = prom_ceros
 
-umbralUnos=150
+imgs_con_1 = np.array(con_1s.iloc[:,1:])
+unos = imgs_con_1.reshape(-1,28, 28)
+prom_unos = np.mean(unos, axis=0)
+prom_unos_dif = prom_unos
+#%%M atriz diferencial ceros
+umbralUnos=50
 
 for i in range(len(prom_ceros_dif)):
     for j in range(len(prom_ceros_dif)):
-        if(prom_uno[i][j]>umbralUnos):
+        if(prom_unos[i][j]>umbralUnos):
             prom_ceros_dif[i][j]=0
 
 plt.figure(figsize=(6, 4))
 plt.imshow(prom_ceros_dif, cmap='hot')
 plt.colorbar()
-plt.title('Imagen promedio (0) sin representativos del 1')
+plt.title('Imagen diferencial del 0')
 plt.show()
 
-umbralCeros=175
+#%% 
+umbralCeros=150
 
 for i in range(0,len(prom_ceros_dif)):
     for j in range(0,len(prom_ceros_dif[0])):
@@ -177,7 +183,7 @@ for i in range(0,len(prom_ceros_dif)):
 
 plt.imshow(prom_ceros_dif, cmap='hot')
 plt.colorbar()
-plt.title('Imagen promedio (0) diferencial')
+plt.title('Pixeles representativos del 0')
 plt.show()
 
 array_ceros_dif=prom_ceros_dif.flatten()
@@ -191,39 +197,34 @@ pixeles_sign_ceros=np.argwhere(array_ceros_dif>0)+1
 # =============================================================================
 
 #Graficamos una imagen al azar del subconjunto de datos generado
-fila = np.random.randint(0, len(con_0s_y_1s))
-graficar(con_0s_y_1s,fila)
+fila = np.random.randint(0, len(df_binario))
+graficar(df_binario,fila)
+#%% Vemos la distribucion de los digitos en el dataset
 
-# Esto calcula para cada pixel la suma total de los valores que tienen a lo largo de todas las imagenes
-# Arma un dataframe cuya primera columna es el pixel, y la segunda es el valor total sumado
-
-def suma_columnas(df):
-    suma_columna = []
-    a = pd.DataFrame()
-    for i in range(len(df.columns)-1):
-        suma_columna.append(df.iloc[1:,i].sum())
-    a['pixel'] = df.columns
-    a = a.drop(0)
-    a['suma_de_color'] = suma_columna
-    return a
-
-columnas = suma_columnas(df)
-columnas_ceros_y_unos = suma_columnas(con_0s_y_1s)
-
-# Dataframe de pixeles que tienen unicamente el valor 0 a lo largo de todas las imagenes
-sub = columnas[columnas['suma_de_color'] == 0]
-print("Proporcion de pixeles que tienen unicamente el valor 0 a lo largo de todas las imagenes del dataset")
-len(sub)/(len(df.columns)-1) * 100 # 66/784*100
-
-#Vemos cuantas muestras se tienen
-cant_de_imgs_por_num = con_0s_y_1s["digito"].value_counts().sort_index()
-porc_de_imgs_por_num = round(cant_de_imgs_por_num / len(con_0s_y_1s) * 100,2)
-cant = pd.DataFrame({'cantidad': cant_de_imgs_por_num})
-porcentajes = pd.DataFrame({'% subconj':porc_de_imgs_por_num,'% dataset original':round(cant_de_imgs_por_num / len(df) * 100,2)})
-cant.index.name = 'Dígito'
-tabla = pd.concat([cant, porcentajes], axis=1)
-
-
+# Calcular las ocurrencias de cada dígito
+ocurrencias = df_binario['digito'].value_counts()
+# Calcular el total de ocurrencias
+total_ocurrencias = ocurrencias.sum()
+# Calcular los porcentajes de ocurrencia
+porcentajes = (ocurrencias / total_ocurrencias) * 100
+# Crear la figura y el eje del gráfico
+fig, ax = plt.subplots()
+digitos = [str(d) for d in ocurrencias.index]
+plt.bar(digitos,ocurrencias.values)
+#Agregar etiquetas de texto en cada barra
+for i in range(len(ocurrencias)):
+    ax.text(i , ocurrencias.values[i],
+            f"{porcentajes.values[i]:.2f}%",
+            ha='center',
+            va='top',
+            rotation=60,
+            c="azure")
+# Configurar etiquetas y título del gráfico
+ax.set_xlabel('Dígitos')
+ax.set_ylabel('Ocurrencias')
+ax.set_title('Ocurrencias de dígitos')
+plt.savefig('./data/Ocurrencias_digitos_binarios.png')
+plt.show()
 #%%
 # =============================================================================
 # Ejercicio 4
@@ -233,15 +234,18 @@ tabla = pd.concat([cant, porcentajes], axis=1)
 # =============================================================================
 #%%
 
-#X = df_0.iloc[:,[629,630,600]]
-#Y = df_0.digito
-# Elegimos 3 atributos(pixeles)
-X = con_0s_y_1s.iloc[:,[213,214,241]]
-Y = con_0s_y_1s.digito
+# Elegimos 3 atributos(pixeles) aleatoriamente de nuestra matriz de pixeles significativos de 0
 
+filas = pixeles_sign_ceros.shape[0]
+filas_aleatorias = np.random.choice(filas, size=3, replace=False)
+atributos_aleatorios_ceros = pixeles_sign_ceros[filas_aleatorias] 
+print(atributos_aleatorios_ceros)
+
+X = df_binario.iloc[:,np.squeeze(atributos_aleatorios_ceros)]
+Y = df_binario.digito
 
 Nrep = 5
-valores_n = [5,10,15,20]
+valores_n = range(4,21,1)
 
 resultados_test = np.zeros((Nrep, len(valores_n)))
 resultados_train = np.zeros((Nrep, len(valores_n)))
@@ -263,28 +267,30 @@ for i in range(Nrep):
         resultados_test[i, j] = acc_test
         resultados_train[i, j] = acc_train
         cms.append(cm)
-        disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm,
-                                        display_labels=model.classes_)
-        disp.plot()
-        print("Exactitud del modelo:", metrics.accuracy_score(Y_test, Y_pred))
-        print("Precisión del modelo: ", metrics.precision_score(Y_test, Y_pred, pos_label=1))
-        print("Sensitividad del modelo: ", metrics.recall_score(Y_test, Y_pred, pos_label=1))
-        print("F1 Score del modelo: ", metrics.f1_score(Y_test, Y_pred, pos_label=1))
+#        disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm,
+#                                        display_labels=model.classes_)
+#        disp.plot()
+#        print("Exactitud del modelo:", metrics.accuracy_score(Y_test, Y_pred))
+#        print("Precisión del modelo: ", metrics.precision_score(Y_test, Y_pred, pos_label=1))
+#        print("Sensitividad del modelo: ", metrics.recall_score(Y_test, Y_pred, pos_label=1))
+#        print("F1 Score del modelo: ", metrics.f1_score(Y_test, Y_pred, pos_label=1))
         j=j+1
-
-#%%
-
+#%% Promediamos los resultados
 promedios_train = np.mean(resultados_train, axis = 0) 
 promedios_test = np.mean(resultados_test, axis = 0) 
 #%%
 
 plt.figure(figsize=(7,5),dpi=100)
-plt.plot(valores_n, promedios_train, label = 'Train')
-plt.plot(valores_n, promedios_test, label = 'Test')
+plt.plot(valores_n, promedios_train, label = 'Train',marker="o",drawstyle="steps-post")
+plt.plot(valores_n, promedios_test, label = 'Test',marker="o",drawstyle="steps-post")
 plt.legend()
-plt.title('Exactitud del modelo de knn')
+plt.title('Exactitud del modelo de knn con 3 atributos')
 plt.xlabel('Cantidad de vecinos')
 plt.ylabel('Exactitud (accuracy)')
+archive = "./data/knn_k_vecinos_3_atributos_significativos.png"
+plt.savefig(archive)
+#%% Elegimos 3 atributos aleatoriamente pero de todos los pixeles
+pixeles = 
 #%%
 # =============================================================================
 # Ejercicio 5
@@ -293,8 +299,8 @@ plt.ylabel('Exactitud (accuracy)')
 # de los resultados, tener en cuenta las medidas de evaluación (por ejemplo,
 # la exactitud) y la cantidad de atributos.
 # =============================================================================
-X = con_0s_y_1s.iloc[:,[490,462,380]]
-Y = con_0s_y_1s.digito
+X = df_binario.iloc[:,[490,462,380]]
+Y = df_binario.digito
 
 # CROSS VALIDATION CON KNN Y TREE CON CROSS_VAL_SCORE
 
@@ -356,8 +362,6 @@ print("Precisión promedio:", average_accuracy)
 # Trabajar nuevamente con el dataset de todos los dígitos. Ajustar un
 # modelo de árbol de decisión. Analizar distintas profundidades.
 # =============================================================================
-import time
-
 #Sin definir profundidad(sin prepruning)
 
 X = df.iloc[:,1:]
@@ -373,79 +377,26 @@ print("Test:",acc_test)
 print("Train:",acc_train)
 print("Profundidad:",model.tree_.max_depth) #20
 #%%
-def entrenar_y_graficar(X,Y,criterio,Nrep,k,nombre_archivo):
-    valores_k = range(1,k+1)
-    resultados_test = np.zeros( (Nrep,k))
-    resultados_train = np.zeros( (Nrep,k))
 
-    for i in range(Nrep):
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
-        for j in valores_k:
-            model = DecisionTreeClassifier(criterion = criterio,max_depth = j)
-            model.fit(X_train, Y_train)
-            Y_pred = model.predict(X_test)
-            Y_pred_train = model.predict(X_train)
-            acc_test = metrics.accuracy_score(Y_test, Y_pred)
-            acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
-            resultados_test[i,j-1] = acc_test
-            resultados_train[i,j-1] = acc_train
-    
-    promedios_train = np.mean(resultados_train, axis = 0) #A lo largo de cada columna
-    promedios_test = np.mean(resultados_test, axis = 0)
-    
-    plt.plot(valores_k, promedios_train,marker="o",label = 'Train',drawstyle="steps-post")
-    plt.plot(valores_k, promedios_test, marker="o",label = 'Test',drawstyle="steps-post")
-    plt.legend()
-    title = "Accuracy segun profundidad, criterio:" + criterio
-    plt.title(title)
-    plt.xlabel('Profundidad')
-    plt.ylabel('Exactitud (accuracy)')
-    archive = "./data/" + nombre_archivo + ".png"
-    plt.savefig(archive)
-    plt.show()
 # Iniciar el contador de tiempo
 start_time = time.time()
 
-entrenar_y_graficar(X, Y, "entropy",5, 20, "entropy_k_20_n_5reps_")
-entrenar_y_graficar(X, Y, "gini",5, 20, "entropy_k_20_5reps_") #21 minutos de ejecucion
+funciones.entrenar_y_graficar(X, Y, "entropy",5, 20, "entropy_k_20_n_5reps_")
+funciones.entrenar_y_graficar(X, Y, "gini",5, 20, "entropy_k_20_5reps_") #21 minutos de ejecucion
 
 end_time = time.time()
 execution_time = end_time - start_time
 print(f"Tiempo de ejecución: {execution_time} segundos")
 #%% Analizamos distintas profundidades
-def entrenar_hasta_prof_k(X,Y,criterio,k,nombre_archivo):
-    valores_k = range(1,k+1)
-    clfs = []
-    #Particionamos el conjunto de entrenamiento en 30% test y 70% train
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
-    for d in valores_k:
-        clf = DecisionTreeClassifier(criterion = criterio,max_depth = d)
-        clf.fit(X_train, Y_train)
-        clfs.append(clf)
-    #node_counts = [clf.tree_.node_count for clf in clfs]
-    #depth = [clf.tree_.max_depth for clf in clfs]
-    train_scores = [clf.score(X_train, Y_train) for clf in clfs]
-    test_scores = [clf.score(X_test, Y_test) for clf in clfs]
-    fig, ax = plt.subplots()
-    ax.set_xlabel("profundidad")
-    ax.set_ylabel("accuracy")
-    title = "Accuracy segun profundidad, criterio:" + criterio
-    ax.set_title(title)
-    ax.plot(valores_k, train_scores, marker="o", label="train", drawstyle="steps-post")
-    ax.plot(valores_k, test_scores, marker="o", label="test", drawstyle="steps-post")
-    ax.legend()
-    archive = "./data/" + nombre_archivo + ".png"
-    plt.savefig(archive)
-    plt.show()
-    
+
 X = df.iloc[:,1:]
 Y = df['digito']
 
 # Iniciar el contador de tiempo
 start_time = time.time()
 # Código que deseas medir
-entrenar_hasta_prof_k(X,Y,"gini",20,"clf_hasta_20k_gini")
-entrenar_hasta_prof_k(X,Y,"entropy",20,"clf_hasta_20k_entropy") #5 min de ejecucion
+funciones.entrenar_hasta_prof_k(X,Y,"gini",20,"clf_hasta_20k_gini")
+funciones.entrenar_hasta_prof_k(X,Y,"entropy",20,"clf_hasta_20k_entropy") #5 min de ejecucion
 # Finalizar el contador de tiempo y calcular la duración
 end_time = time.time()
 execution_time = end_time - start_time
