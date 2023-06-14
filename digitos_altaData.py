@@ -39,7 +39,7 @@ for i in range(28):
         elem = str(i) + "-" + str(j)
         cols.append(elem)
 
-
+#renombro columnas
 df = df.rename(columns=dict(zip(df.columns, cols)))
 df_test = df.rename(columns=dict(zip(df.columns, cols)))
 df_binario_test = df.rename(columns=dict(zip(df.columns, cols)))
@@ -437,63 +437,62 @@ plt.show()
 # de los resultados, tener en cuenta las medidas de evaluación (por ejemplo,
 # la exactitud) y la cantidad de atributos.
 # =============================================================================
-X = df_binario.iloc[:,[490,462,380]]
+# CROSS VALIDATION CON KNN CON CROSS_VALIDATE CON 3 PIXELES SIGNIFICATIVOS ALEATORIOS
+
+filas = pixeles_sign_unos.shape[0]
+filas_aleatorias = np.random.choice(filas, size=3, replace=False)
+atributos_aleatorios_unos = pixeles_sign_unos[filas_aleatorias]
+print(atributos_aleatorios_unos)
+
+X = df_binario.iloc[:,np.squeeze(atributos_aleatorios_unos)]
 Y = df_binario.digito
 
-# CROSS VALIDATION CON KNN Y TREE CON CROSS_VAL_SCORE
+for i in range (4,21,2):
+	knn = KNeighborsClassifier(n_neighbors=i)
+	cv_results = cross_validate(knn, X, Y, cv=10,return_train_score=True)
+	sorted(cv_results.keys())
+#	print('Test score:', cv_results['test_score'])
+#	print('Train score:', cv_results['train_score'])
+	print('Promedio Test score para' ,i, 'vecinos: ', np.mean(cv_results['test_score']))
+	print('Promedio Train score para' ,i, 'vecinos: ', np.mean(cv_results['train_score']))
 
-clf = DecisionTreeClassifier(random_state=42)
-knn = KNeighborsClassifier(n_neighbors=5)
-
-k_folds = KFold(n_splits = 5)
-
-scores = cross_val_score(knn, X, Y, cv = k_folds)
-
-print("Cross Validation Scores: ", scores)
-print("Average CV Score: ", scores.mean())
-print("Number of CV Scores used in Average: ", len(scores))
-
-#%%
-
-# CROSS VALIDATION CON KNN CON CROSS_VALIDATE
-
-cv_results = cross_validate(knn, X, Y, cv=10,return_train_score=True)
-sorted(cv_results.keys())
-print('Test score:', cv_results['test_score'])
-print('Train score:', cv_results['train_score'])
-print('Promedio Test score: ', np.mean(cv_results['test_score']))
-print('Promedio Train score: ', np.mean(cv_results['train_score']))
+pixeles = range(1,785)
+subset_pixels_difsize=[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30]
+muestras_dif_size = []
+for i in range (len(subset_pixels_difsize)):
+    muestra = np.random.choice(pixeles, subset_pixels_difsize[i], replace=False)
+    muestras_dif_size.append(muestra)
 
 #%%
+Y = df_binario.digito
+pixeles = range(1,785)
+tamaños_muestra= range(2,25,2)
+muestras = []
+rango_vecinos= range(4,25,2)
+scores = np.zeros((len(tamaños_muestra),len(rango_vecinos)))
+k_folds = KFold(n_splits = 10)
 
-# CROSS VALIDATION CON KFOLD.SPLIT (FALLO)
+for i in range (len(tamaños_muestra)):
+    muestra = np.random.choice(pixeles, tamaños_muestra[i], replace=False)
+    muestras.append(muestra)
 
-kf = KFold(n_splits=5)
-
-# Inicializar una lista para almacenar los resultados de precisión
-accuracy_scores = []
-
-for train_index, test_index in kf.split(X):
-
-    X_train, X_test = X.iloc[train_index], X.iloc[test_index]
-    Y_train, Y_test = Y[train_index], Y[test_index]
+for j in range(len(muestras)):
+    X = df_binario.iloc[:,muestras[j]]
+    for idx, i in enumerate(rango_vecinos):
+        knn = KNeighborsClassifier(n_neighbors=i)
+        score = cross_val_score(knn,X,Y,cv=k_folds)
+        scores[j][idx] = score.mean()
+        print("Promedio test score con", (j+1)*2,"atributos para",i,"vecinos:",score.mean())
     
-    # Inicializar y ajustar el clasificador KNN
-    knn = KNeighborsClassifier(n_neighbors=3)
-    knn.fit(X_train, Y_train)
-    
-    # Realizar predicciones en el conjunto de prueba
-    Y_pred = knn.predict(X_test)
-    
-    # Calcular la precisión y agregarla a la lista de resultados
-    accuracy = accuracy_score(Y_test, Y_pred)
-    accuracy_scores.append(accuracy)
 
-# Calcular el promedio de los resultados de precisión
-average_accuracy = sum(accuracy_scores) / len(accuracy_scores)
-
-# Imprimir el resultado final
-print("Precisión promedio:", average_accuracy)
+for i in range(len(scores)):
+	label = str(subset_pixels_difsize[i])
+	plt.plot(rango_vecinos, scores[i] , label = label)
+	plt.legend()
+	plt.title('Exactitud del modelo de knn')
+	plt.xlabel('Cantidad de vecinos')
+	plt.ylabel('Exactitud (accuracy)')
+plt.show()
 #%%
 # =============================================================================
 # Ejercicio 6
