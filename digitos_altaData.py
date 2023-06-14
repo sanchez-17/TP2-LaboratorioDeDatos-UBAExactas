@@ -379,6 +379,88 @@ def entrenar_y_graficar(X,Y,criterio,Nrep,k,nombre_archivo):
     plt.savefig(archive)
     plt.show()
 
+def entrenar_y_graficarAlt(X,Y,criterio,k,nombre_archivo):
+    valores_k = range(1,k+1)
+    resultados_test = np.zeros(k)
+    resultados_train = np.zeros(k)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
+    for j in valores_k:
+        model = DecisionTreeClassifier(criterion = criterio,max_depth = j)
+        model.fit(X_train, Y_train)
+        Y_pred = model.predict(X_test)
+        Y_pred_train = model.predict(X_train)
+        acc_test = metrics.accuracy_score(Y_test, Y_pred)
+        acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+        resultados_test[j-1] = acc_test
+        resultados_train[j-1] = acc_train
+    plt.plot(valores_k, resultados_train, label = 'Train')
+    plt.plot(valores_k, 
+             resultados_test,
+             label = 'Test',
+             marker="o",
+             drawstyle="steps-post")
+    plt.legend()
+    plt.title('Exactitud de arboles de decision')
+    plt.xlabel('Profundidad')
+    plt.ylabel('Exactitud (accuracy)')
+    archive = "./data/" + nombre_archivo + ".png"
+    plt.savefig(archive)
+    plt.show()
+
 X = df.iloc[:,1:]
 Y = df['digito']
-entrenar_y_graficar(X,Y,"entropy",2,20,"entropy_k_5_N_3")
+#Criterio: entropy
+#entrenar_y_graficar(X,Y,"entropy",5,12,"entropy_k_12_N_5")
+entrenar_y_graficarAlt(X, Y, "entropy", 20, "entropy_k_20")
+#Criterio: gini
+entrenar_y_graficarAlt(X, Y, "gini", 20, "entropy_k_20")
+#%%
+#Sin definir profundidad(sin prepruning)
+clf = DecisionTreeClassifier(criterion = "entropy")
+clf.fit(X_train, Y_train)
+Y_pred = clf.predict(X_test)
+Y_pred_train = clf.predict(X_train)
+acc_test = metrics.accuracy_score(Y_test, Y_pred)
+acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+print("Criterio: entropy")
+print("Test:",acc_test)
+print("Train:",acc_train)
+print(model.tree_.max_depth)
+#%%
+X = df.iloc[:,1:]
+Y = df['digito']
+def entrenar_hasta_prof_k(X,Y,criterio,k,nombre_archivo):
+    valores_k = range(1,k+1)
+    clfs = []
+    #Particionamos el conjunto de entrenamiento en 30% test y 70% train
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
+    for d in valores_k:
+        clf = DecisionTreeClassifier(criterion = criterio,max_depth = d)
+        clf.fit(X_train, Y_train)
+        clfs.append(clf)
+    #node_counts = [clf.tree_.node_count for clf in clfs]
+    #depth = [clf.tree_.max_depth for clf in clfs]
+    train_scores = [clf.score(X_train, Y_train) for clf in clfs]
+    test_scores = [clf.score(X_test, Y_test) for clf in clfs]
+    fig, ax = plt.subplots()
+    ax.set_xlabel("profundidad")
+    ax.set_ylabel("accuracy")
+    ax.set_title("Accuracy segun profundidad, criterio : Entropy")
+    ax.plot(valores_k, train_scores, marker="o", label="train", drawstyle="steps-post")
+    ax.plot(valores_k, test_scores, marker="o", label="test", drawstyle="steps-post")
+    ax.legend()
+    archive = "./data/" + nombre_archivo + ".png"
+    plt.savefig(archive)
+    plt.show()
+entrenar_hasta_prof_k(X,Y,"entropy",20,"clf_hasta_20k_entropy")
+#%%
+clf = DecisionTreeClassifier(random_state=42)
+
+k_folds = KFold(n_splits = 10)
+
+scores = cross_val_score(clf, X, Y, cv = k_folds)
+
+print("Cross Validation Scores: ", scores)
+print("Average CV Score: ", scores.mean())
+print("Number of CV Scores used in Average: ", len(scores))
