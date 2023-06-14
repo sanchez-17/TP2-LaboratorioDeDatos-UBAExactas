@@ -245,7 +245,7 @@ X = df_binario.iloc[:,np.squeeze(atributos_aleatorios_ceros)]
 Y = df_binario.digito
 
 Nrep = 5
-valores_n = range(4,21,1)
+valores_n = range(4,21,2)
 
 resultados_test = np.zeros((Nrep, len(valores_n)))
 resultados_train = np.zeros((Nrep, len(valores_n)))
@@ -284,13 +284,151 @@ plt.figure(figsize=(7,5),dpi=100)
 plt.plot(valores_n, promedios_train, label = 'Train',marker="o",drawstyle="steps-post")
 plt.plot(valores_n, promedios_test, label = 'Test',marker="o",drawstyle="steps-post")
 plt.legend()
-plt.title('Exactitud del modelo de knn con 3 atributos')
+plt.title('Exactitud del modelo de KNN con 3 atributos signif. del 0')
 plt.xlabel('Cantidad de vecinos')
 plt.ylabel('Exactitud (accuracy)')
 archive = "./data/knn_k_vecinos_3_atributos_significativos.png"
 plt.savefig(archive)
 #%% Elegimos 3 atributos aleatoriamente pero de todos los pixeles
-pixeles = 
+pixeles = np.arange(1,785)
+subset_pixels = [] 
+for i in range (0,4):
+    muestra = np.random.choice(pixeles, 3, replace=False)
+    subset_pixels.append(muestra)
+    
+    
+test_tot=[]
+train_tot=[]
+
+for m in subset_pixels:
+    X = df_binario.iloc[:,np.squeeze(m)]
+    resultados_test = np.zeros((Nrep, len(valores_n)))
+    resultados_train = np.zeros((Nrep, len(valores_n)))
+    cms = []
+    for i in range(Nrep):
+        j=0
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
+        while j < len(valores_n):
+            k = valores_n[j]
+            model = KNeighborsClassifier(n_neighbors = k)
+            model.fit(X_train, Y_train) 
+            Y_pred = model.predict(X_test)
+            Y_pred_train = model.predict(X_train)
+            cm = metrics.confusion_matrix(Y_test, Y_pred)
+            acc_test = metrics.accuracy_score(Y_test, Y_pred)
+            acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+            resultados_test[i, j] = acc_test
+            resultados_train[i, j] = acc_train
+            cms.append(cm)
+            j=j+1 
+    test_tot.append(np.mean(resultados_test,axis=0))
+    train_tot.append(np.mean(resultados_train,axis=0))       
+#        disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm,
+#                                        display_labels=model.classes_)
+#        disp.plot()
+#        print("Exactitud del modelo:", metrics.accuracy_score(Y_test, Y_pred))
+#        print("Precisión del modelo: ", metrics.precision_score(Y_test, Y_pred, pos_label=1))
+#        print("Sensitividad del modelo: ", metrics.recall_score(Y_test, Y_pred, pos_label=1))
+#        print("F1 Score del modelo: ", metrics.f1_score(Y_test, Y_pred, pos_label=1))
+#%%
+plt.figure(figsize=(7,5),dpi=100)
+for i in range(0,4):
+    plt.plot(valores_n, train_tot[i], label = 'Train',marker="o",drawstyle="steps-post")
+    plt.plot(valores_n, test_tot[i], label = 'Test',marker="o",drawstyle="steps-post")
+    plt.legend()
+    plt.title('Exactitud de KNN con 3 atributos aleatorios (muestra: {})'.format(subset_pixels[i]))
+    plt.xlabel('Cantidad de vecinos')
+    plt.ylabel('Exactitud (accuracy)')
+    plt.show()
+    
+    
+#%% Variando el tamaño de la muestra y evaluando para varios k
+subset_pixels_difsize = [4,6,8,10,12]
+muestras_dif_size = [] 
+for i in range (0,5):
+    muestra = np.random.choice(pixeles, subset_pixels_difsize[i], replace=False)
+    muestras_dif_size.append(muestra)
+    
+    
+test_tot_difsize=[]
+train_tot_difsize=[]
+
+for m in muestras_dif_size:
+    X = df_binario.iloc[:,np.squeeze(m)]
+    resultados_test = np.zeros((Nrep, len(valores_n)))
+    resultados_train = np.zeros((Nrep, len(valores_n)))
+    cms = []
+    for i in range(Nrep):
+        j=0
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
+        while j < len(valores_n):
+            k = valores_n[j]
+            model = KNeighborsClassifier(n_neighbors = k)
+            model.fit(X_train, Y_train) 
+            Y_pred = model.predict(X_test)
+            Y_pred_train = model.predict(X_train)
+            cm = metrics.confusion_matrix(Y_test, Y_pred)
+            acc_test = metrics.accuracy_score(Y_test, Y_pred)
+            acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+            resultados_test[i, j] = acc_test
+            resultados_train[i, j] = acc_train
+            cms.append(cm)
+            j=j+1 
+    test_tot_difsize.append(np.mean(resultados_test,axis=0))
+    train_tot_difsize.append(np.mean(resultados_train,axis=0))
+
+#%%
+plt.figure(figsize=(7,5),dpi=100)
+for i in range(0,4):
+    plt.plot(valores_n, train_tot_difsize[i], label = 'Train',marker="o",drawstyle="steps-post")
+    plt.plot(valores_n, test_tot_difsize[i], label = 'Test',marker="o",drawstyle="steps-post")
+    plt.legend()
+    plt.title('Exactitud del modelo de knn con 3 atributos (tamaño de muestra: {})'.format(muestras_dif_size[i].size))
+    plt.xlabel('Cantidad de vecinos')
+    plt.ylabel('Exactitud (accuracy)')
+    plt.show()
+
+#%% Variando el tamaño de la muestra y evaluando para K = 12
+subset_pixels_difsize = [4,6,8,10,12,16,18,20,22,24,26,28,30]
+muestras_dif_size = [] 
+for i in range (0,len(subset_pixels_difsize)):
+    muestra = np.random.choice(pixeles, subset_pixels_difsize[i], replace=False)
+    muestras_dif_size.append(muestra)
+
+    
+test_tot_difsize_kfijo=[]
+train_tot_difsize_kfijo=[]
+
+for m in muestras_dif_size:
+    X = df_binario.iloc[:,np.squeeze(m)]
+    resultados_test = np.zeros(Nrep)
+    resultados_train = np.zeros(Nrep)
+    cms = []
+    for i in range(Nrep):
+        j=0
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
+        model = KNeighborsClassifier(n_neighbors = 12)
+        model.fit(X_train, Y_train) 
+        Y_pred = model.predict(X_test)
+        Y_pred_train = model.predict(X_train)
+        cm = metrics.confusion_matrix(Y_test, Y_pred)
+        acc_test = metrics.accuracy_score(Y_test, Y_pred)
+        acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+        resultados_test[i] = acc_test
+        resultados_train[i] = acc_train
+        cms.append(cm)
+    test_tot_difsize_kfijo.append(np.mean(resultados_test))
+    train_tot_difsize_kfijo.append(np.mean(resultados_train))
+
+#%%
+plt.figure(figsize=(7,5),dpi=100)
+plt.plot(subset_pixels_difsize, train_tot_difsize_kfijo, label = 'Train',marker="o",drawstyle="steps-post")
+plt.plot(subset_pixels_difsize, test_tot_difsize_kfijo, label = 'Test',marker="o",drawstyle="steps-post")
+plt.legend()
+plt.title('Exactitud del modelo de KNN según cantidad de atributos (K = 12)')
+plt.xlabel('Cantidad de atributos')
+plt.ylabel('Exactitud (accuracy)')
+plt.show() 
 #%%
 # =============================================================================
 # Ejercicio 5
