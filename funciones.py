@@ -3,6 +3,7 @@
 """
 Grupo: Alta Data
 Integrantes: Mariano Papaleo, Gaston Ariel Sanchez, Juan Pablo Aquilante
+Descripcion: Definicion de funciones a utilizar en el archivo digitos_altaData.py
 """
 import numpy as np
 import pandas as pd
