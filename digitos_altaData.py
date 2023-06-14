@@ -348,7 +348,23 @@ print("Precisión promedio:", average_accuracy)
 # Trabajar nuevamente con el dataset de todos los dígitos. Ajustar un
 # modelo de árbol de decisión. Analizar distintas profundidades.
 # =============================================================================
+import time
 
+#Sin definir profundidad(sin prepruning)
+
+X = df.iloc[:,1:]
+Y = df['digito']
+clf = DecisionTreeClassifier(criterion = "entropy")
+clf.fit(X_train, Y_train)
+Y_pred = clf.predict(X_test)
+Y_pred_train = clf.predict(X_train)
+acc_test = metrics.accuracy_score(Y_test, Y_pred)
+acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+print("Criterio: entropy")
+print("Test:",acc_test)
+print("Train:",acc_train)
+print("Profundidad:",model.tree_.max_depth) #20
+#%%
 def entrenar_y_graficar(X,Y,criterio,Nrep,k,nombre_archivo):
     valores_k = range(1,k+1)
     resultados_test = np.zeros( (Nrep,k))
@@ -372,64 +388,23 @@ def entrenar_y_graficar(X,Y,criterio,Nrep,k,nombre_archivo):
     plt.plot(valores_k, promedios_train, label = 'Train')
     plt.plot(valores_k, promedios_test, label = 'Test')
     plt.legend()
-    plt.title('Exactitud de arboles de decision')
+    title = "Accuracy segun profundidad, criterio:" + criterio
+    plt.title(title)
     plt.xlabel('Profundidad')
     plt.ylabel('Exactitud (accuracy)')
     archive = "./data/" + nombre_archivo + ".png"
     plt.savefig(archive)
     plt.show()
+# Iniciar el contador de tiempo
+start_time = time.time()
 
-def entrenar_y_graficarAlt(X,Y,criterio,k,nombre_archivo):
-    valores_k = range(1,k+1)
-    resultados_test = np.zeros(k)
-    resultados_train = np.zeros(k)
+entrenar_y_graficar(X, Y, "entropy",5, 20, "entropy_k_20_n_5reps")
+entrenar_y_graficar(X, Y, "gini",5, 20, "entropy_k_20_5reps")
 
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
-    for j in valores_k:
-        model = DecisionTreeClassifier(criterion = criterio,max_depth = j)
-        model.fit(X_train, Y_train)
-        Y_pred = model.predict(X_test)
-        Y_pred_train = model.predict(X_train)
-        acc_test = metrics.accuracy_score(Y_test, Y_pred)
-        acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
-        resultados_test[j-1] = acc_test
-        resultados_train[j-1] = acc_train
-    plt.plot(valores_k, resultados_train, label = 'Train')
-    plt.plot(valores_k, 
-             resultados_test,
-             label = 'Test',
-             marker="o",
-             drawstyle="steps-post")
-    plt.legend()
-    plt.title('Exactitud de arboles de decision')
-    plt.xlabel('Profundidad')
-    plt.ylabel('Exactitud (accuracy)')
-    archive = "./data/" + nombre_archivo + ".png"
-    plt.savefig(archive)
-    plt.show()
-
-X = df.iloc[:,1:]
-Y = df['digito']
-#Criterio: entropy
-#entrenar_y_graficar(X,Y,"entropy",5,12,"entropy_k_12_N_5")
-entrenar_y_graficarAlt(X, Y, "entropy", 20, "entropy_k_20")
-#Criterio: gini
-entrenar_y_graficarAlt(X, Y, "gini", 20, "entropy_k_20")
-#%%
-#Sin definir profundidad(sin prepruning)
-clf = DecisionTreeClassifier(criterion = "entropy")
-clf.fit(X_train, Y_train)
-Y_pred = clf.predict(X_test)
-Y_pred_train = clf.predict(X_train)
-acc_test = metrics.accuracy_score(Y_test, Y_pred)
-acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
-print("Criterio: entropy")
-print("Test:",acc_test)
-print("Train:",acc_train)
-print(model.tree_.max_depth)
-#%%
-X = df.iloc[:,1:]
-Y = df['digito']
+end_time = time.time()
+execution_time = end_time - start_time
+print(f"Tiempo de ejecución: {execution_time} segundos")
+#%% Analizamos distintas profundidades
 def entrenar_hasta_prof_k(X,Y,criterio,k,nombre_archivo):
     valores_k = range(1,k+1)
     clfs = []
@@ -446,14 +421,28 @@ def entrenar_hasta_prof_k(X,Y,criterio,k,nombre_archivo):
     fig, ax = plt.subplots()
     ax.set_xlabel("profundidad")
     ax.set_ylabel("accuracy")
-    ax.set_title("Accuracy segun profundidad, criterio : Entropy")
+    title = "Accuracy segun profundidad, criterio:" + criterio
+    ax.set_title(title)
     ax.plot(valores_k, train_scores, marker="o", label="train", drawstyle="steps-post")
     ax.plot(valores_k, test_scores, marker="o", label="test", drawstyle="steps-post")
     ax.legend()
     archive = "./data/" + nombre_archivo + ".png"
     plt.savefig(archive)
     plt.show()
-entrenar_hasta_prof_k(X,Y,"entropy",20,"clf_hasta_20k_entropy")
+    
+X = df.iloc[:,1:]
+Y = df['digito']
+
+# Iniciar el contador de tiempo
+start_time = time.time()
+# Código que deseas medir
+entrenar_hasta_prof_k(X,Y,"gini",20,"clf_hasta_20k_gini")
+entrenar_hasta_prof_k(X,Y,"entropy",20,"clf_hasta_20k_entropy") #5 min de ejecucion
+# Finalizar el contador de tiempo y calcular la duración
+end_time = time.time()
+execution_time = end_time - start_time
+
+print(f"Tiempo de ejecución: {execution_time} segundos")
 #%%
 clf = DecisionTreeClassifier(random_state=42)
 
