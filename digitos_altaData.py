@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Grupo: Alta Data
+Integrantes: Mariano Papaleo, Gaston Ariel Sanchez, Juan Pablo Aquilante
 
+"""
 #Carga de archivos
 
 import numpy as np
@@ -12,10 +16,7 @@ from sklearn.model_selection import KFold, cross_val_score, cross_validate
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
 
-
-
-
-df = pd.read_csv('./data/mnist_desarrollo.csv')
+df = pd.read_csv('./data/mnist_desarrollo.csv',header = None)
 
 # =============================================================================
 #Ejercicio 1
@@ -51,7 +52,8 @@ porc_de_imgs_por_num = round(cant_de_imgs_por_num / len(df) * 100,2)
 proporcion_digitos = pd.DataFrame({'cant': cant_de_imgs_por_num,'% cant.':porc_de_imgs_por_num})
 proporcion_digitos.index.name = 'Dígito'
 proporcion_digitos = proporcion_digitos.sort_values(by='cant')
-#%%
+#%% vemos la distribucion de los digitos en el dataset
+
 # Calcular las ocurrencias de cada dígito
 ocurrencias = df['digito'].value_counts()
 # Calcular el total de ocurrencias
@@ -114,12 +116,14 @@ umbralCeros=150
 
 plt.imshow(prom_ceros, cmap='hot')
 plt.colorbar()
-plt.title('Imagen promedio (0)')
+plt.title('Imagen promedio para el digito 0')
+plt.axis('off')
 plt.show()
 
 plt.imshow(prom_uno, cmap='hot')
 plt.colorbar()
-plt.title('Imagen  (1)')
+plt.title('Imagen promedio para el digito 1')
+plt.axis('off')
 plt.show()
 #%% Matriz diferencial unos
 
@@ -127,7 +131,6 @@ for i in range(len(prom_uno_dif)):
     for j in range(len(prom_uno_dif)):
         if(prom_cpixeles_sign_unoeros[i][j]>umbralCeros):
             prom_uno_dif[i][j]=0
-
 
 plt.figure(figsize=(6, 4))
 plt.imshow(prom_uno_dif, cmap='hot')
@@ -213,12 +216,13 @@ print("Proporcion de pixeles que tienen unicamente el valor 0 a lo largo de toda
 len(sub)/(len(df.columns)-1) * 100 # 66/784*100
 
 #Vemos cuantas muestras se tienen
-cant_de_imgs_por_num = con_0s_y_1s[label].value_counts().sort_index()
+cant_de_imgs_por_num = con_0s_y_1s["digito"].value_counts().sort_index()
 porc_de_imgs_por_num = round(cant_de_imgs_por_num / len(con_0s_y_1s) * 100,2)
 cant = pd.DataFrame({'cantidad': cant_de_imgs_por_num})
 porcentajes = pd.DataFrame({'% subconj':porc_de_imgs_por_num,'% dataset original':round(cant_de_imgs_por_num / len(df) * 100,2)})
 cant.index.name = 'Dígito'
 tabla = pd.concat([cant, porcentajes], axis=1)
+
 
 #%%
 # =============================================================================
@@ -241,6 +245,7 @@ valores_n = [5,10,15,20]
 
 resultados_test = np.zeros((Nrep, len(valores_n)))
 resultados_train = np.zeros((Nrep, len(valores_n)))
+cms = []
 
 
 for i in range(Nrep):
@@ -252,10 +257,19 @@ for i in range(Nrep):
         model.fit(X_train, Y_train) 
         Y_pred = model.predict(X_test)
         Y_pred_train = model.predict(X_train)
+        cm = metrics.confusion_matrix(Y_test, Y_pred)
         acc_test = metrics.accuracy_score(Y_test, Y_pred)
         acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
         resultados_test[i, j] = acc_test
         resultados_train[i, j] = acc_train
+        cms.append(cm)
+        disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm,
+                                        display_labels=model.classes_)
+        disp.plot()
+        print("Exactitud del modelo:", metrics.accuracy_score(Y_test, Y_pred))
+        print("Precisión del modelo: ", metrics.precision_score(Y_test, Y_pred, pos_label=1))
+        print("Sensitividad del modelo: ", metrics.recall_score(Y_test, Y_pred, pos_label=1))
+        print("F1 Score del modelo: ", metrics.f1_score(Y_test, Y_pred, pos_label=1))
         j=j+1
 
 #%%
@@ -271,7 +285,7 @@ plt.legend()
 plt.title('Exactitud del modelo de knn')
 plt.xlabel('Cantidad de vecinos')
 plt.ylabel('Exactitud (accuracy)')
-
+#%%
 # =============================================================================
 # Ejercicio 5
 # Para comparar modelos, utilizar validación cruzada. Comparar modelos
@@ -288,12 +302,6 @@ clf = DecisionTreeClassifier(random_state=42)
 knn = KNeighborsClassifier(n_neighbors=5)
 
 k_folds = KFold(n_splits = 5)
-
-scores = cross_val_score(clf, X, Y, cv = k_folds)
-
-print("Cross Validation Scores: ", scores)
-print("Average CV Score: ", scores.mean())
-print("Number of CV Scores used in Average: ", len(scores))
 
 scores = cross_val_score(knn, X, Y, cv = k_folds)
 
@@ -385,8 +393,8 @@ def entrenar_y_graficar(X,Y,criterio,Nrep,k,nombre_archivo):
     promedios_train = np.mean(resultados_train, axis = 0) #A lo largo de cada columna
     promedios_test = np.mean(resultados_test, axis = 0)
     
-    plt.plot(valores_k, promedios_train, label = 'Train')
-    plt.plot(valores_k, promedios_test, label = 'Test')
+    plt.plot(valores_k, promedios_train,marker="o",label = 'Train',drawstyle="steps-post")
+    plt.plot(valores_k, promedios_test, marker="o",label = 'Test',drawstyle="steps-post")
     plt.legend()
     title = "Accuracy segun profundidad, criterio:" + criterio
     plt.title(title)
@@ -398,8 +406,8 @@ def entrenar_y_graficar(X,Y,criterio,Nrep,k,nombre_archivo):
 # Iniciar el contador de tiempo
 start_time = time.time()
 
-entrenar_y_graficar(X, Y, "entropy",5, 20, "entropy_k_20_n_5reps")
-entrenar_y_graficar(X, Y, "gini",5, 20, "entropy_k_20_5reps")
+entrenar_y_graficar(X, Y, "entropy",5, 20, "entropy_k_20_n_5reps_")
+entrenar_y_graficar(X, Y, "gini",5, 20, "entropy_k_20_5reps_") #21 minutos de ejecucion
 
 end_time = time.time()
 execution_time = end_time - start_time
@@ -444,10 +452,9 @@ execution_time = end_time - start_time
 
 print(f"Tiempo de ejecución: {execution_time} segundos")
 #%%
-clf = DecisionTreeClassifier(random_state=42)
-
+#Al parecer 12 es la profundidad optima
+clf = DecisionTreeClassifier(criterion = "entropy",max_depth = 12)
 k_folds = KFold(n_splits = 10)
-
 scores = cross_val_score(clf, X, Y, cv = k_folds)
 
 print("Cross Validation Scores: ", scores)
