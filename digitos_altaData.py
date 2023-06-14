@@ -159,7 +159,7 @@ imgs_con_1 = np.array(con_1s.iloc[:,1:])
 unos = imgs_con_1.reshape(-1,28, 28)
 prom_unos = np.mean(unos, axis=0)
 prom_unos_dif = prom_unos
-#%%M atriz diferencial ceros
+#%%Matriz diferencial ceros
 umbralUnos=50
 
 for i in range(len(prom_ceros_dif)):
@@ -218,7 +218,8 @@ for i in range(len(ocurrencias)):
             ha='center',
             va='top',
             rotation=60,
-            c="azure")
+            c="azure",
+            fontsize=20)
 # Configurar etiquetas y título del gráfico
 ax.set_xlabel('Dígitos')
 ax.set_ylabel('Ocurrencias')
@@ -232,7 +233,6 @@ plt.show()
 #Probar con distintos conjuntos de 3 atributos y comparar resultados.
 #Analizar utilizando otras cantidades de atributos.
 # =============================================================================
-#%%
 
 # Elegimos 3 atributos(pixeles) aleatoriamente de nuestra matriz de pixeles significativos de 0
 
@@ -290,7 +290,7 @@ plt.ylabel('Exactitud (accuracy)')
 archive = "./data/knn_k_vecinos_3_atributos_significativos.png"
 plt.savefig(archive)
 #%% Elegimos 3 atributos aleatoriamente pero de todos los pixeles
-pixeles = 
+
 #%%
 # =============================================================================
 # Ejercicio 5
@@ -366,6 +366,8 @@ print("Precisión promedio:", average_accuracy)
 
 X = df.iloc[:,1:]
 Y = df['digito']
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
+
 clf = DecisionTreeClassifier(criterion = "entropy")
 clf.fit(X_train, Y_train)
 Y_pred = clf.predict(X_test)
@@ -375,18 +377,29 @@ acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
 print("Criterio: entropy")
 print("Test:",acc_test)
 print("Train:",acc_train)
-print("Profundidad:",model.tree_.max_depth) #20
+print("Profundidad:",clf.tree_.max_depth) #20
+print()
+clf = DecisionTreeClassifier(criterion = "gini")
+clf.fit(X_train, Y_train)
+Y_pred = clf.predict(X_test)
+Y_pred_train = clf.predict(X_train)
+acc_test = metrics.accuracy_score(Y_test, Y_pred)
+acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
+print("Criterio: gini")
+print("Test:",acc_test)
+print("Train:",acc_train)
+print("Profundidad:",clf.tree_.max_depth) #47
 #%%
 
 # Iniciar el contador de tiempo
 start_time = time.time()
 
-funciones.entrenar_y_graficar(X, Y, "entropy",5, 20, "entropy_k_20_n_5reps_")
-funciones.entrenar_y_graficar(X, Y, "gini",5, 20, "entropy_k_20_5reps_") #21 minutos de ejecucion
+entrenar_y_graficar(X, Y, "entropy",5, 20, "entropy_k_20_n_5reps_")
+entrenar_y_graficar(X, Y, "gini",5, 20, "entropy_k_20_5reps_")      
 
 end_time = time.time()
 execution_time = end_time - start_time
-print(f"Tiempo de ejecución: {execution_time} segundos")
+print(f"Tiempo de ejecución: {execution_time} segundos") #21 minutos de ejecucion
 #%% Analizamos distintas profundidades
 
 X = df.iloc[:,1:]
@@ -395,19 +408,101 @@ Y = df['digito']
 # Iniciar el contador de tiempo
 start_time = time.time()
 # Código que deseas medir
-funciones.entrenar_hasta_prof_k(X,Y,"gini",20,"clf_hasta_20k_gini")
-funciones.entrenar_hasta_prof_k(X,Y,"entropy",20,"clf_hasta_20k_entropy") #5 min de ejecucion
+entrenar_hasta_prof_k(X,Y,"gini",20,"clf_hasta_20k_gini")
+entrenar_hasta_prof_k(X,Y,"entropy",20,"clf_hasta_20k_entropy") 
 # Finalizar el contador de tiempo y calcular la duración
 end_time = time.time()
 execution_time = end_time - start_time
 
-print(f"Tiempo de ejecución: {execution_time} segundos")
+print(f"Tiempo de ejecución: {execution_time} segundos")#5 minutos de ejecucion
 #%%
-#Al parecer 12 es la profundidad optima
+#Al parecer 12 es la profundidad optima, veamos por criterio
 clf = DecisionTreeClassifier(criterion = "entropy",max_depth = 12)
 k_folds = KFold(n_splits = 10)
-scores = cross_val_score(clf, X, Y, cv = k_folds)
+scores_Entropy = cross_val_score(clf, X, Y, cv = k_folds)
 
-print("Cross Validation Scores: ", scores)
-print("Average CV Score: ", scores.mean())
-print("Number of CV Scores used in Average: ", len(scores))
+print("Cross Validation Scores: ", scores_Entropy)
+print("Average CV Score: ", scores_Entropy.mean())
+print("Number of CV Scores used in Average: ", len(scores_Entropy))
+
+clf = DecisionTreeClassifier(criterion = "gini",max_depth = 12)
+k_folds = KFold(n_splits = 10)
+scores_Gini = cross_val_score(clf, X, Y, cv = k_folds)
+
+print("Cross Validation Scores: ", scores_Gini)
+print("Average CV Score: ", scores_Gini.mean())
+print("Number of CV Scores used in Average: ", len(scores_Gini))
+
+mejor_criterio = "Entropy" if scores_Entropy.mean() > scores_Gini.mean() else "Gini"
+print("Mejor criterio:",mejor_criterio)#Entropy
+#%%
+# =============================================================================
+# Ejercicio 7
+# Para comparar y seleccionar los árboles de decisión, utilizar validación
+# cruzada con k-folding.
+# =============================================================================
+
+clfs=[]
+profundidades = [i for i in range(5,20)]
+k_folds = KFold(n_splits = 5)
+for k in profundidades:
+	clf = DecisionTreeClassifier(criterion = "entropy",max_depth = k)
+	clfs.append(clf)
+scores = [cross_val_score(clf, X, Y, cv = k_folds).mean() for clf in clfs]
+max_score = np.argmax(scores)
+prof_optima = profundidades[max_score]
+print("profundida optima: ",prof_optima) #14
+
+#%%
+clf = DecisionTreeClassifier(criterion = "entropy",max_depth = 14)
+knn = KNeighborsClassifier(n_neighbors=12)
+
+X = df.iloc[:,1:]
+Y = df['digito']
+k_folds = KFold(n_splits = 10)
+
+scores_knn = cross_val_score(knn, X, Y, cv = k_folds)
+print("KNN-k:12")
+print("Cross Validation Scores: ", scores_knn)
+print("Average CV Score: ", scores_knn.mean())
+print("Number of CV Scores used in Average: ", len(scores_knn)) #5 min de ejecucion
+
+scores_clf = cross_val_score(clf, X, Y, cv = k_folds)
+
+print("Decision tree-profundidad:12")
+print("Cross Validation Scores: ", scores_clf)
+print("Average CV Score: ", scores_clf.mean())
+print("Number of CV Scores used in Average: ", len(scores_clf))
+
+mejor_modelo = "clf max_depth=12" if scores_clf.mean() > scores_knn.mean() else "KNN k=12"
+print("mejor modelo: ",mejor_modelo)
+#%%
+""" PREDICCIÓN DF_TEST """
+
+X = df.iloc[:,1:]
+Y = df['digito']
+clf = DecisionTreeClassifier(criterion = "entropy",max_depth=14)
+clf.fit(X, Y)
+Y_pred_train = clf.predict(X)
+acc_train = metrics.accuracy_score(Y, Y_pred_train)
+print("Predicción de digitos en el df_test con DecisionTreeClassifier, Criterio: entropy")
+print("Train:",acc_train)#0.991
+
+X_test = df_test.iloc[:,1:]
+Y_test = df_test['digito']
+
+Y_pred = clf.predict(X_test)
+acc_test = metrics.accuracy_score(Y_test, Y_pred)
+
+print("Test:",acc_test)#0.8871
+#%%
+knn = KNeighborsClassifier(n_neighbors=12)
+knn.fit(X, Y)
+Y_pred_train = knn.predict(X)
+acc_train = metrics.accuracy_score(Y, Y_pred_train)
+print("Predicción de digitos en el df_test con KNN, k=12")
+print("Train:",acc_train)#0.97
+Y_pred = knn.predict(X_test)
+acc_test = metrics.accuracy_score(Y_test, Y_pred)
+
+print("Test:",acc_test)#0.97
