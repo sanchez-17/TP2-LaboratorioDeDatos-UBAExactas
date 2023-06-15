@@ -16,6 +16,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn import metrics
 
 def graficar(df,fila):
+    """
+    Grafica una imagen indicada por indice del dataframe df
+    """
     plt.imshow(np.array(df.iloc[fila,1:]).reshape(28,28),cmap='Greys')
     numero = df.iloc[fila,0]
     plt.title(f'Numero: {numero}')
@@ -32,6 +35,11 @@ def suma_columnas(df):
     return a
 
 def entrenar_y_graficar(X,Y,criterio,Nrep,k,nombre_archivo):
+    """
+    Entrena un modelo de decision tree con profundidades de 1 a k y un criterio dado. Para cada profundidad
+    se realiza un split del conjunto de datos Nrep veces. Se guarda una visualizacion con
+    el nombre_archivo
+    """
     valores_k = range(1,k+1)
     resultados_test = np.zeros( (Nrep,k))
     resultados_train = np.zeros( (Nrep,k))
@@ -63,6 +71,10 @@ def entrenar_y_graficar(X,Y,criterio,Nrep,k,nombre_archivo):
     plt.show()
     
 def entrenar_hasta_prof_k(X,Y,criterio,k,nombre_archivo):
+    """
+    Entrena un modelo de decision tree con profundidades de 1 a k y un criterio dado.
+    Se guarda una visualizacion con el nombre_archivo.
+    """
     valores_k = range(1,k+1)
     clfs = []
     #Particionamos el conjunto de entrenamiento en 30% test y 70% train

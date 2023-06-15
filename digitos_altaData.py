@@ -83,7 +83,9 @@ matriz_prom = np.mean(imgs, axis=0)
 plt.imshow(matriz_prom, cmap='hot')
 plt.colorbar()
 plt.title('Imagen promedio')
+plt.savefig('./data/imagen_promedio.png')
 plt.show()
+plt.close()
 
 #%%
 # =============================================================================
@@ -112,13 +114,17 @@ plt.imshow(prom_ceros, cmap='hot')
 plt.colorbar()
 plt.title('Imagen promedio para el digito 0')
 plt.axis('off')
+plt.savefig('./data/imagen_promedio_0.png')
 plt.show()
 
 plt.imshow(prom_unos, cmap='hot')
 plt.colorbar()
 plt.title('Imagen promedio para el digito 1')
 plt.axis('off')
+plt.savefig('./data/imagen_promedio_1.png')
 plt.show()
+
+plt.close()
 #%% Matriz diferencial unos: 
 # Sacamos pixeles significativos del 0 de la imagen prom del 1
 
@@ -133,7 +139,11 @@ plt.figure(figsize=(6, 4))
 plt.imshow(prom_unos_dif, cmap='hot')
 plt.colorbar()
 plt.title('Imagen diferencial del 1')
+plt.axis('off')
+plt.savefig('./data/diferencial_1.png')
 plt.show()
+plt.close()
+
 #%% Mas aun, resaltamos pixeles significativos de la imagen resultante
 umbralUnos=150
 
@@ -145,7 +155,11 @@ for i in range(0,len(prom_unos_dif)):
 plt.imshow(prom_unos_dif, cmap='hot')
 plt.colorbar()
 plt.title('Pixeles representativos del 1')
+plt.axis('off')
+plt.savefig('./data/representativos_1.png')
 plt.show()
+plt.close()
+
 #busco las columnas relevantes
 array_unos_dif=prom_unos_dif.flatten()
 pixeles_sign_unos=np.argwhere(array_unos_dif>0)+1
@@ -172,7 +186,10 @@ plt.figure(figsize=(6, 4))
 plt.imshow(prom_ceros_dif, cmap='hot')
 plt.colorbar()
 plt.title('Imagen diferencial del 0')
+plt.axis('off')
+plt.savefig('./data/diferencial_0.png')
 plt.show()
+plt.close()
 
 #%% 
 umbralCeros=150
@@ -185,7 +202,10 @@ for i in range(0,len(prom_ceros_dif)):
 plt.imshow(prom_ceros_dif, cmap='hot')
 plt.colorbar()
 plt.title('Pixeles representativos del 0')
+plt.axis('off')
+plt.savefig('./data/representativos_0.png')
 plt.show()
+plt.close()
 
 array_ceros_dif=prom_ceros_dif.flatten()
 pixeles_sign_ceros=np.argwhere(array_ceros_dif>0)+1            
