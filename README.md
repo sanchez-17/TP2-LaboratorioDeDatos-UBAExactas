@@ -15,6 +15,7 @@ gunzip -c data/mnist_desarrollo.csv.gz > data/mnist_desarrollo.csv
 ```
 
 Luego los datos de test
+```
 gunzip -c data/mnist_test.csv.gz > data/mnist_test.csv
 gunzip -c data/mnist_test_binario.csv.gz > data/mnist_test_binario.csv
 ```
