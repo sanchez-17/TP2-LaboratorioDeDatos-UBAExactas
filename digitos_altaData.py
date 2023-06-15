@@ -22,6 +22,7 @@ df = pd.read_csv('./data/mnist_desarrollo.csv',header = None)
 df_test = pd.read_csv('./data/mnist_test.csv',header=None)
 df_binario_test = pd.read_csv('./data/mnist_test_binario.csv',header = None)
 
+#%%
 # =============================================================================
 #Ejercicio 1
 #Realizar un análisis exploratorio de los datos. Ver, entre otras cosas,
@@ -249,8 +250,6 @@ valores_n = range(4,21,2)
 
 resultados_test = np.zeros((Nrep, len(valores_n)))
 resultados_train = np.zeros((Nrep, len(valores_n)))
-cms = []
-
 
 for i in range(Nrep):
     j=0
@@ -261,19 +260,10 @@ for i in range(Nrep):
         model.fit(X_train, Y_train) 
         Y_pred = model.predict(X_test)
         Y_pred_train = model.predict(X_train)
-        cm = metrics.confusion_matrix(Y_test, Y_pred)
         acc_test = metrics.accuracy_score(Y_test, Y_pred)
         acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
         resultados_test[i, j] = acc_test
         resultados_train[i, j] = acc_train
-        cms.append(cm)
-#        disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm,
-#                                        display_labels=model.classes_)
-#        disp.plot()
-#        print("Exactitud del modelo:", metrics.accuracy_score(Y_test, Y_pred))
-#        print("Precisión del modelo: ", metrics.precision_score(Y_test, Y_pred, pos_label=1))
-#        print("Sensitividad del modelo: ", metrics.recall_score(Y_test, Y_pred, pos_label=1))
-#        print("F1 Score del modelo: ", metrics.f1_score(Y_test, Y_pred, pos_label=1))
         j=j+1
 #%% Promediamos los resultados
 promedios_train = np.mean(resultados_train, axis = 0) 
@@ -284,11 +274,10 @@ plt.figure(figsize=(7,5),dpi=100)
 plt.plot(valores_n, promedios_train, label = 'Train',marker="o",drawstyle="steps-post")
 plt.plot(valores_n, promedios_test, label = 'Test',marker="o",drawstyle="steps-post")
 plt.legend()
-plt.title('Exactitud del modelo de KNN con 3 atributos signif. del 0')
+title='Exactitud del modelo de KNN con 3 atributos signif. del 0'
 plt.xlabel('Cantidad de vecinos')
 plt.ylabel('Exactitud (accuracy)')
-archive = "./data/knn_k_vecinos_3_atributos_significativos.png"
-plt.savefig(archive)
+plt.show()
 #%% Elegimos 3 atributos aleatoriamente pero de todos los pixeles
 pixeles = np.arange(1,785)
 subset_pixels = [] 
@@ -304,7 +293,6 @@ for m in subset_pixels:
     X = df_binario.iloc[:,np.squeeze(m)]
     resultados_test = np.zeros((Nrep, len(valores_n)))
     resultados_train = np.zeros((Nrep, len(valores_n)))
-    cms = []
     for i in range(Nrep):
         j=0
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3)
@@ -314,34 +302,35 @@ for m in subset_pixels:
             model.fit(X_train, Y_train) 
             Y_pred = model.predict(X_test)
             Y_pred_train = model.predict(X_train)
-            cm = metrics.confusion_matrix(Y_test, Y_pred)
             acc_test = metrics.accuracy_score(Y_test, Y_pred)
             acc_train = metrics.accuracy_score(Y_train, Y_pred_train)
             resultados_test[i, j] = acc_test
             resultados_train[i, j] = acc_train
-            cms.append(cm)
             j=j+1 
     test_tot.append(np.mean(resultados_test,axis=0))
     train_tot.append(np.mean(resultados_train,axis=0))       
-#        disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm,
-#                                        display_labels=model.classes_)
-#        disp.plot()
-#        print("Exactitud del modelo:", metrics.accuracy_score(Y_test, Y_pred))
-#        print("Precisión del modelo: ", metrics.precision_score(Y_test, Y_pred, pos_label=1))
-#        print("Sensitividad del modelo: ", metrics.recall_score(Y_test, Y_pred, pos_label=1))
-#        print("F1 Score del modelo: ", metrics.f1_score(Y_test, Y_pred, pos_label=1))
 #%%
-plt.figure(figsize=(7,5),dpi=100)
-for i in range(0,4):
-    plt.plot(valores_n, train_tot[i], label = 'Train',marker="o",drawstyle="steps-post")
-    plt.plot(valores_n, test_tot[i], label = 'Test',marker="o",drawstyle="steps-post")
-    plt.legend()
-    plt.title('Exactitud de KNN con 3 atributos aleatorios (muestra: {})'.format(subset_pixels[i]))
-    plt.xlabel('Cantidad de vecinos')
-    plt.ylabel('Exactitud (accuracy)')
-    plt.show()
-    
-    
+fig, axes = plt.subplots(2, 2,figsize=(10, 8))
+#plt.figure(figsize=(20,20),dpi=100)
+for i in range(4):
+    title="Muestra: " + str(subset_pixels[i])
+    row = i // 2
+    col = i % 2
+    axes[row, col].plot(valores_n, train_tot[i], label = 'Train',marker="o",drawstyle="steps-post")
+    axes[row, col].plot(valores_n, test_tot[i], label = 'Train',marker="o",drawstyle="steps-post")
+    axes[row, col].set_title(title)
+    axes[row, col].set_xlabel('Cantidad de vecinos')
+    axes[row, col].set_ylabel('Exactitud (accuracy)')
+    axes[row, col].xaxis.set_major_locator(plt.MaxNLocator(integer=True)) #valores enteros para eje x
+plt.subplots_adjust(top=0.90)  # Ajusta el margen superior
+plt.subplots_adjust(wspace=0.4, hspace=0.4)  # Ajusta los espacios horizontal y vertical
+plt.suptitle("Exactitud de KNN con 3 atributos aleatorios", fontsize=15)
+archive = "./data/knn_k_vecinos_3_atributos_aleatorios.png"
+plt.savefig(archive)
+plt.show()
+#%%
+archive = "./data/knn_k_vecinos_3_atributos_significativos.png"
+plt.savefig(archive)
 #%% Variando el tamaño de la muestra y evaluando para varios k
 subset_pixels_difsize = [4,6,8,10,12]
 muestras_dif_size = [] 
