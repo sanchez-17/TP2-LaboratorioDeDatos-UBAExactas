@@ -595,12 +595,12 @@ print("Number of CV Scores used in Average: ", len(scores_knn)) #5 min de ejecuc
 
 scores_clf = cross_val_score(clf, X, Y, cv = k_folds)
 
-print("Decision tree-profundidad:12")
+print("Decision tree-profundidad:14")
 print("Cross Validation Scores: ", scores_clf)
 print("Average CV Score: ", scores_clf.mean())
 print("Number of CV Scores used in Average: ", len(scores_clf))
 
-mejor_modelo = "clf max_depth=12" if scores_clf.mean() > scores_knn.mean() else "KNN k=12"
+mejor_modelo = "clf max_depth=14" if scores_clf.mean() > scores_knn.mean() else "KNN k=12"
 print("mejor modelo: ",mejor_modelo)
 #%%
 """ PREDICCIÓN DF_TEST """
@@ -632,3 +632,92 @@ Y_pred = knn.predict(X_test)
 acc_test = metrics.accuracy_score(Y_test, Y_pred)
 
 print("Test:",acc_test)#0.97
+
+# =============================================================================
+# Performance sobre conjunto de test
+# =============================================================================
+#%% VEAMOS QUE TAL KNN PREDICE EL DF_TEST_BINARIO
+""" PREDICCIÓN DF_TEST_BINARIO """
+""" Pixeles que distinguen al cero """
+
+filas = pixeles_sign_ceros.shape[0]
+filas_aleatorias = np.random.choice(filas, size=3, replace=False)
+atributos_aleatorios_ceros = pixeles_sign_ceros[filas_aleatorias]
+print(atributos_aleatorios_ceros)
+
+X = df_binario.iloc[:,np.squeeze(atributos_aleatorios_ceros)]
+Y = df_binario.digito
+
+#Para pixeles significativos aleatorio a partir de k=5 se tiene buena performance
+k = 5 # Cantidad de vecinos
+
+model = KNeighborsClassifier(n_neighbors = k)
+model.fit(X, Y)
+Y_pred_train = model.predict(X)
+acc_train = metrics.accuracy_score(Y, Y_pred_train)
+print("KNeighborsClassifier con 5 vecinos y 3 atributos, predicción de ceros en el df_test_binario")
+print("Train:",acc_train)
+
+X_test = df_binario_test.iloc[:,np.squeeze(atributos_aleatorios_ceros)]
+Y_test = df_binario_test['digito']
+
+Y_pred = model.predict(X_test)
+acc_test = metrics.accuracy_score(Y_test, Y_pred)
+
+print("Test:",acc_test)
+#%%
+""" PREDICCIÓN DF_TEST_BINARIO """
+""" Pixeles que distinguen al uno """
+
+filas = pixeles_sign_unos.shape[0]
+filas_aleatorias = np.random.choice(filas, size=3, replace=False)
+atributos_aleatorios_unos = pixeles_sign_unos[filas_aleatorias] 
+print(atributos_aleatorios_unos)
+
+X = df_binario.iloc[:,np.squeeze(atributos_aleatorios_unos)]
+Y = df_binario.digito
+
+k = 5 # Cantidad de vecinos optima
+
+model = KNeighborsClassifier(n_neighbors = k)
+model.fit(X, Y) 
+Y_pred_train = model.predict(X)
+acc_train = metrics.accuracy_score(Y, Y_pred_train)
+print("KNeighborsClassifier con 5 vecinos y 3 atributos, predicción de unos en el df_test_binario")
+print("Train:",acc_train)
+
+X_test = df_binario_test.iloc[:,np.squeeze(atributos_aleatorios_unos)]
+Y_test = df_binario_test['digito']
+
+Y_pred = model.predict(X_test)
+acc_test = metrics.accuracy_score(Y_test, Y_pred)
+
+print("Test:",acc_test)
+#%%
+""" PREDICCIÓN DF_TEST_BINARIO"""
+""" Pixeles aleatorios del DataFrame de desarrollo"""
+
+pixeles = np.arange(1,785)
+muestra_pixeles = [] 
+muestra = np.random.choice(pixeles, 15, replace=False)
+muestra_pixeles.append(muestra)
+
+X = df_binario.iloc[:,np.squeeze(muestra_pixeles)]
+Y = df_binario.digito
+
+k = 15
+
+model = KNeighborsClassifier(n_neighbors = k)
+model.fit(X, Y)
+Y_pred_train = model.predict(X)
+acc_train = metrics.accuracy_score(Y, Y_pred_train)
+print("KNeighborsClassifier con 15 vecinos y 15 atributos, predicción de df_test_binario con pixeles aleatorios")
+print("Train:",acc_train)
+
+X_test = df_binario_test.iloc[:,np.squeeze(muestra_pixeles)]
+Y_test = df_binario_test['digito']
+
+Y_pred = model.predict(X_test)
+acc_test = metrics.accuracy_score(Y_test, Y_pred)
+
+print("Test:",acc_test)
