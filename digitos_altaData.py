@@ -621,7 +621,7 @@ print("Average CV Score: ", scores_clf.mean())
 print("Number of CV Scores used in Average: ", len(scores_clf))
 
 mejor_modelo = "clf max_depth=14" if scores_clf.mean() > scores_knn.mean() else "KNN k=12"
-print("mejor modelo: ",mejor_modelo)
+print("mejor modelo: ",mejor_modelo)#KNN
 #%%
 """ PREDICCIÓN DF_TEST """
 
