@@ -493,14 +493,16 @@ for j in range(len(muestras)):
         scores[j][idx] = score.mean()
         print("Promedio test score con", (j+1)*2,"atributos para",i,"vecinos:",score.mean())
     
-
+#%%
+n = len(tamaños_muestra)
+colors = plt.cm.rainbow(np.linspace(0, 1, n))
 for i in range(len(scores)):
-	label = str(subset_pixels_difsize[i])
-	plt.plot(rango_vecinos, scores[i] , label = label)
-	plt.legend()
-	plt.title('Exactitud del modelo de knn')
-	plt.xlabel('Cantidad de vecinos')
-	plt.ylabel('Exactitud (accuracy)')
+    label = str(tamaños_muestra[i])
+    plt.plot(rango_vecinos, scores[i] , label = label,color=colors[i])
+    plt.legend(loc='right')
+    plt.title('Exactitud del modelo de knn en función de n° vecinos y atributos')
+    plt.xlabel('Cantidad de vecinos')
+    plt.ylabel('Exactitud (accuracy)')
 plt.show()
 #%%
 # =============================================================================
